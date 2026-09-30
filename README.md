@@ -17,7 +17,6 @@ Browse the data at
 | `hourly.parquet` | A reading, last three years only | 94 MB |
 
 Start with daily, which runs from 1900 to today but is sparse before 1975.
-[data/README.md](data/README.md) has links to view or download each file, and
 [DATA.md](DATA.md) explains every column along with the known problems in the
 source data.
 
