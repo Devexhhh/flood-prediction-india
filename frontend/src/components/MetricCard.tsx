@@ -11,18 +11,20 @@ export function MetricCard({
   label: string;
   value: string;
   foot: string;
-  tone: string;
+  tone: "blue" | "red" | "green" | "violet" | "amber";
 }) {
   return (
-    <div className="metric-card">
+    <div className={`metric-card tone-${tone}`}>
       <div className="metric-top">
-        <span>{label}</span>
-        <span className={`metric-icon ${tone}`}>{icon}</span>
+        <span className="metric-label">{label}</span>
+        <span className={`metric-icon-badge ${tone}`}>{icon}</span>
       </div>
-      <strong className="metric-value">{value}</strong>
+      <div className="metric-value-wrap">
+        <strong className="metric-value">{value}</strong>
+      </div>
       <div className="metric-foot">
-        <span className={`metric-dot ${tone}`} />
-        {foot}
+        <span className={`metric-indicator-dot ${tone}`} />
+        <span className="metric-foot-text">{foot}</span>
       </div>
     </div>
   );
