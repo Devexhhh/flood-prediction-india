@@ -32,7 +32,11 @@ export interface Overview {
   threshold: number
   station_count: number
   alert_count: number
+  below_threshold_count: number
   mean_score: number
+  highest_probability: number
+  highest_station_code: string
+  highest_station_name: string
   latest_data_date: string
   dataset_start: string
   dataset_end: string
@@ -59,6 +63,10 @@ export interface StationDetail {
   latest_date: string
   danger_level?: number | null
   warning_level?: number | null
+  water_level?: number | null
+  level_change_1d?: number | null
+  level_change_3d?: number | null
+  rain_7d?: number | null
   lat?: number | null
   lon?: number | null
   history: HistoryPoint[]
@@ -74,4 +82,8 @@ export interface ModelMetric {
   F1?: number
   False_Positives?: number
   False_Negatives?: number
+  True_Negatives?: number
+  True_Positives?: number
+  confusion_matrix?: { tn: number; fp: number; fn: number; tp: number }
+  feature_importance?: { feature: string; importance: number }[]
 }
