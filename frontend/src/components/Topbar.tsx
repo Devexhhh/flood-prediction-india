@@ -1,28 +1,31 @@
-import { CircleHelp, Waves } from "lucide-react";
+import { RiDashboardLine, TbRadar } from "./icons";
 import type { AppPage } from "../types";
 
 const PAGE_LABEL: Record<AppPage, string> = {
-  overview: "National overview",
-  stations: "Station explorer",
-  models: "Model performance",
+  overview: "National Overview",
+  stations: "Station Explorer",
+  models: "Model Evaluation",
 };
 
 export function Topbar({ activePage }: { activePage: AppPage }) {
   return (
     <header className="topbar">
       <div className="mobile-brand">
-        <Waves size={20} /> RIVERWATCH
+        <TbRadar size={18} color="#38bdf8" />
+        <span>RIVERWATCH</span>
       </div>
+
       <div className="breadcrumb">
-        Monitoring <span>/</span> <strong>{PAGE_LABEL[activePage]}</strong>
+        <span>RiverWatch</span>
+        <span className="breadcrumb-separator">/</span>
+        <strong>{PAGE_LABEL[activePage]}</strong>
       </div>
+
       <div className="top-actions">
-        <span className="system-status">
-          <i /> API workspace
-        </span>
-        <button className="icon-button" title="About this dashboard">
-          <CircleHelp size={18} />
-        </button>
+        <div className="system-pill">
+          <span className="live-dot" />
+          <span>Telemetry Stream Active</span>
+        </div>
       </div>
     </header>
   );
