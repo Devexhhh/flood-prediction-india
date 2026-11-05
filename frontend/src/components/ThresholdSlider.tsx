@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import {
   THRESHOLD_MAX,
   THRESHOLD_MIN,
@@ -12,7 +13,25 @@ export function ThresholdSlider({
   value: number;
   onChange: (value: number) => void;
 }) {
+  const [percentage, setPercentage] = useState((value * 100).toFixed(2));
+
+  useEffect(() => setPercentage((value * 100).toFixed(2)), [value]);
+
   const label = formatThresholdPct(value);
+
+  function commitPercentage() {
+    const next = Number(percentage);
+    if (!Number.isFinite(next)) {
+      setPercentage((value * 100).toFixed(2));
+      return;
+    }
+    const normalized = Math.min(
+      THRESHOLD_MAX,
+      Math.max(THRESHOLD_MIN, next / 100),
+    );
+    onChange(normalized);
+  }
+
   return (
     <div className="heading-control threshold-control">
       <label className="control-label" htmlFor="alert-threshold">
@@ -36,6 +55,18 @@ export function ThresholdSlider({
         <output className="threshold-value" htmlFor="alert-threshold">
           {label}
         </output>
+        <input
+          className="threshold-number"
+          type="number"
+          min={THRESHOLD_MIN * 100}
+          max={THRESHOLD_MAX * 100}
+          step="0.01"
+          value={percentage}
+          onChange={(e) => setPercentage(e.target.value)}
+          onBlur={commitPercentage}
+          onKeyDown={(e) => e.key === "Enter" && commitPercentage()}
+          aria-label="Enter threshold percentage"
+        />
       </div>
     </div>
   );
