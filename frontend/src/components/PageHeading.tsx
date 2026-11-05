@@ -1,10 +1,10 @@
 import { MODELS, type AppPage, type ModelName } from "../types";
 import { ThresholdSlider } from "./ThresholdSlider";
 
-const PAGE_COPY: Record<AppPage, { title: string }> = {
-  overview: { title: "National overview" },
-  stations: { title: "Station explorer" },
-  models: { title: "Model performance" },
+const PAGE_TITLES: Record<AppPage, string> = {
+  overview: "National Overview",
+  stations: "Station Explorer",
+  models: "Model Evaluation",
 };
 
 export function PageHeading({
@@ -22,34 +22,31 @@ export function PageHeading({
 }) {
   return (
     <section className="page-heading">
-      <div>
-        <div className="eyebrow">
-          <span className="eyebrow-dot" /> HYDROLOGICAL INTELLIGENCE{" "}
-          <span className="eyebrow-divider">/</span> INDIA
-        </div>
-        <h1>{PAGE_COPY[activePage].title}</h1>
-        <p>
-          Monitor river stations and assess next-day danger-level exceedance
-          risk.
-        </p>
+      <div className="heading-title-group">
+        <h1>{PAGE_TITLES[activePage]}</h1>
       </div>
-      <div className="heading-controls">
-        <div className="heading-control">
-          <label className="control-label" htmlFor="prediction-model">
-            PREDICTION MODEL
-          </label>
-          <select
-            id="prediction-model"
-            value={model}
-            onChange={(e) => onModelChange(e.target.value as ModelName)}
-          >
-            {MODELS.map((m) => (
-              <option key={m}>{m}</option>
-            ))}
-          </select>
+
+      {activePage === "overview" && (
+        <div className="heading-controls">
+          <div className="heading-control">
+            <label className="control-label" htmlFor="prediction-model">
+              MODEL
+            </label>
+            <div className="glass-select-wrap">
+              <select
+                id="prediction-model"
+                value={model}
+                onChange={(e) => onModelChange(e.target.value as ModelName)}
+              >
+                {MODELS.map((m) => (
+                  <option key={m} value={m}>{m}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+          <ThresholdSlider value={threshold} onChange={onThresholdChange} />
         </div>
-        <ThresholdSlider value={threshold} onChange={onThresholdChange} />
-      </div>
+      )}
     </section>
   );
 }
