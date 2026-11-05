@@ -2,10 +2,9 @@ export function AppFooter() {
   return (
     <footer className="app-footer">
       <span>
-        RIVERWATCH <b>·</b> FLOOD PREDICTION INDIA
+        <strong>RIVERWATCH</strong> · Hydrological Risk Intelligence
       </span>
-      <span>Research prototype · CWC-derived historical data</span>
-      <span>Model scores are not calibrated warnings</span>
+      <span>CWC Hydrometric Telemetry</span>
     </footer>
   );
 }
