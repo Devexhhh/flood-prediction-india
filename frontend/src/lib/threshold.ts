@@ -8,7 +8,7 @@ export const DEFAULT_THRESHOLDS: Record<ModelName, number> = {
 
 export const THRESHOLD_MIN = 0.01;
 export const THRESHOLD_MAX = 0.99;
-export const THRESHOLD_STEP = 0.01;
+export const THRESHOLD_STEP = 0.0001;
 
 export function isAlert(probability: number, threshold: number) {
   return probability >= threshold;
