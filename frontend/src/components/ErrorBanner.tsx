@@ -1,4 +1,4 @@
-import { AlertTriangle, X } from "lucide-react";
+import { TbAlertOctagon, HiXMark } from "./icons";
 
 export function ErrorBanner({
   message,
@@ -9,16 +9,17 @@ export function ErrorBanner({
 }) {
   return (
     <div className="error-banner">
-      <AlertTriangle size={18} />{" "}
-      <div>
-        <strong>Backend connection issue</strong>
+      <span className="error-icon-wrap">
+        <TbAlertOctagon size={18} color="#ef4444" />
+      </span>
+      <div className="error-text">
+        <strong>Telemetry Gateway Notice</strong>
         <p>
-          {message}. Confirm the FastAPI server is running on port 8000 and
-          project assets exist.
+          {message}. Check backend API service connectivity.
         </p>
       </div>
-      <button onClick={onDismiss}>
-        <X size={16} />
+      <button className="glass-icon-btn close-btn" onClick={onDismiss} aria-label="Dismiss error">
+        <HiXMark size={16} color="#e4e4e7" />
       </button>
     </div>
   );
