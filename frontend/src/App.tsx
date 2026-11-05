@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from "react";
-import { Activity } from "lucide-react";
 import { AppFooter } from "./components/AppFooter";
 import { ErrorBanner } from "./components/ErrorBanner";
 import { HistoryPanel } from "./components/HistoryPanel";
@@ -10,6 +9,7 @@ import { PageHeading } from "./components/PageHeading";
 import { Sidebar } from "./components/Sidebar";
 import { StationDirectory } from "./components/StationDirectory";
 import { Topbar } from "./components/Topbar";
+import { TbRadar } from "./components/icons";
 import { api } from "./lib/api";
 import { downloadStations } from "./lib/csv";
 import { formatDate } from "./lib/format";
@@ -131,6 +131,7 @@ function App() {
           {error && (
             <ErrorBanner message={error} onDismiss={() => setError("")} />
           )}
+
           <PageHeading
             activePage={activePage}
             model={model}
@@ -141,27 +142,28 @@ function App() {
 
           {busy && (
             <div className="loading-panel">
-              <div className="spinner" /> Loading station data and trained
-              models…
+              <div className="spinner" /> Loading station telemetry…
             </div>
           )}
+
           {!busy && !error && overview && (
             <>
-              <div className="snapshot-line">
-                <span>
-                  <Activity size={15} /> LIVE WORKSPACE <b>·</b> Local processed
-                  dataset
+              <div className="telemetry-bar">
+                <span className="telemetry-stat">
+                  <TbRadar size={15} color="#38bdf8" />
+                  Telemetry Date: <strong>{formatDate(overview.latest_data_date)}</strong>
                 </span>
-                <span>
-                  Latest available data{" "}
-                  <strong>{formatDate(overview.latest_data_date)}</strong>
+                <span className="telemetry-stat">
+                  Model: <strong>{model}</strong>
                 </span>
               </div>
+
               {activePage !== "models" && (
                 <MetricsGrid
                   overview={overview}
                   threshold={threshold}
                   alertCount={alertCount}
+                  stations={stations}
                 />
               )}
 
@@ -206,10 +208,14 @@ function App() {
               )}
 
               {activePage !== "models" && detail && (
-                <HistoryPanel detail={detail} />
+                <HistoryPanel
+                  detail={detail}
+                  stationName={selectedStation?.station_name}
+                />
               )}
             </>
           )}
+
           <AppFooter />
         </div>
       </main>
