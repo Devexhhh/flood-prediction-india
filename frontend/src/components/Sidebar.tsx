@@ -1,19 +1,16 @@
 import {
-  BarChart3,
-  ChevronDown,
-  LayoutDashboard,
-  MapPinned,
-  ShieldCheck,
-  Waves,
-} from "lucide-react";
+  RiDashboardLine,
+  RiCpuLine,
+  PhMapPin,
+  TbRadar,
+} from "./icons";
 import type { AppPage } from "../types";
 
-const NAV: { id: AppPage; label: string; icon: typeof LayoutDashboard; pill?: string }[] =
-  [
-    { id: "overview", label: "Overview", icon: LayoutDashboard, pill: "01" },
-    { id: "stations", label: "Station explorer", icon: MapPinned },
-    { id: "models", label: "Model performance", icon: BarChart3 },
-  ];
+const NAV = [
+  { id: "overview" as AppPage, label: "Overview", icon: RiDashboardLine, color: "#3b82f6" },
+  { id: "stations" as AppPage, label: "Station Explorer", icon: PhMapPin, color: "#10b981" },
+  { id: "models" as AppPage, label: "Model Evaluation", icon: RiCpuLine, color: "#a855f7" },
+];
 
 export function Sidebar({
   activePage,
@@ -26,46 +23,51 @@ export function Sidebar({
     <aside className="sidebar">
       <div className="brand">
         <div className="brand-mark">
-          <Waves size={23} />
+          <TbRadar size={22} color="#38bdf8" />
         </div>
-        <div>
-          <strong>
-            RIVER<span>WATCH</span>
-          </strong>
-          <small>FLOOD INTELLIGENCE</small>
+        <div className="brand-text">
+          <strong>RIVERWATCH</strong>
+          <small>HYDRO ANALYTICS</small>
         </div>
       </div>
-      <div className="workspace-label">WORKSPACE</div>
+
+      <div className="workspace-label">MONITORING</div>
+
       <nav className="nav-list">
-        {NAV.map(({ id, label, icon: Icon, pill }) => (
-          <button
-            key={id}
-            className={activePage === id ? "nav-item active" : "nav-item"}
-            onClick={() => onNavigate(id)}
-          >
-            <Icon size={18} /> {label}
-            {pill ? <span className="nav-pill">{pill}</span> : null}
-          </button>
-        ))}
+        {NAV.map(({ id, label, icon: Icon, color }) => {
+          const isActive = activePage === id;
+          return (
+            <button
+              key={id}
+              className={isActive ? "nav-item active" : "nav-item"}
+              onClick={() => onNavigate(id)}
+            >
+              <span
+                className="nav-icon-wrap"
+                style={{
+                  color: isActive ? color : "#71717a",
+                  borderColor: isActive ? `${color}40` : "transparent",
+                  background: isActive ? `${color}18` : "transparent",
+                }}
+              >
+                <Icon size={17} color={isActive ? color : "#a1a1aa"} />
+              </span>
+              <span className="nav-label">{label}</span>
+            </button>
+          );
+        })}
       </nav>
+
       <div className="sidebar-bottom">
-        <div className="source-card">
-          <div className="source-icon">
-            <ShieldCheck size={17} />
+        <div className="system-telemetry-card">
+          <div className="telemetry-header">
+            <span className="pulse-indicator"></span>
+            <strong>India Network</strong>
           </div>
-          <strong>Research prototype</strong>
-          <p>
-            Station-level danger-threshold exceedance predictions. Not an
-            official warning service.
-          </p>
-        </div>
-        <div className="profile-row">
-          <div className="avatar">IN</div>
-          <div>
-            <strong>India monitoring</strong>
-            <small>CWC-derived observations</small>
+          <div className="telemetry-meta">
+            <span>CWC Hydrometry Pipeline</span>
+            <code>Active · 1,400+ Stns</code>
           </div>
-          <ChevronDown size={15} />
         </div>
       </div>
     </aside>
