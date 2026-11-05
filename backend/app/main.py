@@ -163,12 +163,17 @@ def overview(model: str = Query(default="Random Forest")):
     if probability_col not in latest.columns:
         raise HTTPException(status_code=404, detail=f"Model unavailable: {model}")
     threshold = THRESHOLDS.get(model, 0.5)
+    highest = latest.loc[latest[probability_col].idxmax()]
     return json_safe({
         "model": model,
         "threshold": threshold,
         "station_count": len(latest),
         "alert_count": int((latest[probability_col] >= threshold).sum()),
+        "below_threshold_count": int((latest[probability_col] < threshold).sum()),
         "mean_score": float(latest[probability_col].mean()),
+        "highest_probability": float(highest[probability_col]),
+        "highest_station_code": highest["station_code"],
+        "highest_station_name": highest["station_name"],
         "latest_data_date": latest["date"].max(),
         "dataset_start": assets["data"]["date"].min(),
         "dataset_end": assets["data"]["date"].max(),
@@ -241,6 +246,10 @@ def station_detail(station_code: str, model: str = Query(default="Random Forest"
         "latest_date": row["date"],
         "danger_level": row.get("danger_level"),
         "warning_level": row.get("warning_level"),
+        "water_level": row.get("water_level"),
+        "level_change_1d": row.get("level_change_1d"),
+        "level_change_3d": row.get("level_change_3d"),
+        "rain_7d": row.get("rain_7d"),
         "lat": row.get("lat"),
         "lon": row.get("lon"),
         "history": history.to_dict(orient="records"),
@@ -256,4 +265,23 @@ def model_metrics():
             "models": [],
         }
     metrics = pd.read_csv(METRICS_PATH)
-    return json_safe({"available": True, "models": metrics.to_dict(orient="records")})
+    assets = get_assets()
+    models = []
+    for metric in metrics.to_dict(orient="records"):
+        model = assets["models"].get(metric["Model"])
+        if model is not None:
+            estimator = getattr(model, "named_steps", {}).get("model", model)
+            importance = getattr(estimator, "feature_importances_", None)
+            if importance is None and hasattr(estimator, "coef_"):
+                importance = np.abs(np.asarray(estimator.coef_)).ravel()
+            if importance is not None:
+                metric["feature_importance"] = [
+                    {"feature": feature, "importance": float(score)}
+                    for feature, score in sorted(zip(FEATURES, importance), key=lambda item: item[1], reverse=True)
+                ][:10]
+        tn, fp = metric.get("True_Negatives"), metric.get("False_Positives")
+        fn, tp = metric.get("False_Negatives"), metric.get("True_Positives")
+        if all(pd.notna(value) for value in [tn, fp, fn, tp]):
+            metric["confusion_matrix"] = {"tn": tn, "fp": fp, "fn": fn, "tp": tp}
+        models.append(metric)
+    return json_safe({"available": True, "models": models})
