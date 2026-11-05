@@ -1,4 +1,4 @@
-import { ArrowUpRight, Download } from "lucide-react";
+import { TbDatabaseExport, HiArrowUpRight } from "./icons";
 import { pct } from "../lib/format";
 import { isAlert } from "../lib/threshold";
 import type { AppPage, Station } from "../types";
@@ -22,51 +22,50 @@ export function PriorityStations({
     <div className="panel station-panel">
       <div className="panel-header">
         <div>
-          <div className="panel-kicker">PRIORITY REVIEW</div>
-          <h2>Highest model scores</h2>
-          <p>Stations ranked by selected model</p>
+          <h2>Priority Stations</h2>
+          <span className="panel-subtitle">Ranked by exceedance probability</span>
         </div>
         <button
-          className="icon-button"
+          className="glass-icon-btn"
           onClick={onDownload}
-          title="Download CSV"
+          title="Export CSV"
+          aria-label="Export CSV"
         >
-          <Download size={17} />
+          <TbDatabaseExport size={16} color="#60a5fa" />
         </button>
       </div>
+
       <div className="mini-list">
-        {stations.slice(0, 6).map((s, i) => (
-          <button
-            className={`mini-station ${selectedCode === s.station_code ? "selected" : ""}`}
-            key={s.station_code}
-            onClick={() => onSelect(s.station_code)}
-          >
-            <span className={`rank rank-${i + 1}`}>
-              {String(i + 1).padStart(2, "0")}
-            </span>
-            <span className="mini-name">
-              <strong>{s.station_name || s.station_code}</strong>
-              <small>{s.station_code}</small>
-            </span>
-            <span className="mini-score">
-              <strong>{pct(s.probability)}</strong>
-              <small
-                className={
-                  isAlert(s.probability, threshold)
-                    ? "text-danger"
-                    : "text-safe"
-                }
-              >
-                {isAlert(s.probability, threshold)
-                  ? "Above threshold"
-                  : "Below threshold"}
-              </small>
-            </span>
-          </button>
-        ))}
+        {stations.slice(0, 6).map((s, i) => {
+          const alert = isAlert(s.probability, threshold);
+          return (
+            <button
+              className={`mini-station ${selectedCode === s.station_code ? "selected" : ""}`}
+              key={s.station_code}
+              onClick={() => onSelect(s.station_code)}
+            >
+              <span className={`rank rank-${i + 1}`}>
+                {String(i + 1).padStart(2, "0")}
+              </span>
+              <span className="mini-name">
+                <strong>{s.station_name || s.station_code}</strong>
+                <small>{s.station_code}</small>
+              </span>
+              <span className="mini-score">
+                <strong>{pct(s.probability)}</strong>
+                <span className={`mini-status-chip ${alert ? "chip-danger" : "chip-safe"}`}>
+                  <span className={`status-dot ${alert ? "dot-danger" : "dot-safe"}`} />
+                  {alert ? "Alert" : "Normal"}
+                </span>
+              </span>
+            </button>
+          );
+        })}
       </div>
-      <button className="panel-link" onClick={() => onNavigate("stations")}>
-        View all stations <ArrowUpRight size={15} />
+
+      <button className="panel-footer-btn" onClick={() => onNavigate("stations")}>
+        <span>Open Station Directory</span>
+        <HiArrowUpRight size={15} color="#38bdf8" />
       </button>
     </div>
   );
