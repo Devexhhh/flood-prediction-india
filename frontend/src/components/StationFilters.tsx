@@ -1,4 +1,4 @@
-import { Search } from "lucide-react";
+import { HiMagnifyingGlass, HiAdjustmentsHorizontal } from "./icons";
 import type { RiskFilter } from "../types";
 
 export function StationFilters({
@@ -21,21 +21,24 @@ export function StationFilters({
   return (
     <div className={className}>
       <div className="search-box">
-        <Search size={16} />
+        <HiMagnifyingGlass size={16} color="#38bdf8" />
         <input
           value={query}
           onChange={(e) => onQueryChange(e.target.value)}
           placeholder={searchPlaceholder}
         />
       </div>
-      <select
-        value={riskFilter}
-        onChange={(e) => onRiskFilterChange(e.target.value as RiskFilter)}
-      >
-        <option value="all">{allLabel}</option>
-        <option value="alert">Above threshold</option>
-        <option value="watch">Below threshold</option>
-      </select>
+      <div className="filter-select-wrap">
+        <HiAdjustmentsHorizontal size={14} color="#8b5cf6" className="filter-select-icon" />
+        <select
+          value={riskFilter}
+          onChange={(e) => onRiskFilterChange(e.target.value as RiskFilter)}
+        >
+          <option value="all">{allLabel}</option>
+          <option value="alert">Exceedance Alert</option>
+          <option value="watch">Normal / Safe</option>
+        </select>
+      </div>
     </div>
   );
 }
