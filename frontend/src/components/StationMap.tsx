@@ -1,5 +1,4 @@
 import { useEffect } from "react";
-import { ArrowUpRight } from "lucide-react";
 import {
   Circle,
   MapContainer,
@@ -7,6 +6,7 @@ import {
   Tooltip as MapTooltip,
   useMap,
 } from "react-leaflet";
+import { HiArrowUpRight, TbRadar } from "./icons";
 import { pct } from "../lib/format";
 import { isAlert } from "../lib/threshold";
 import type { AppPage, RiskFilter, Station } from "../types";
@@ -49,24 +49,31 @@ export function StationMap({
   return (
     <div className="panel map-panel">
       <div className="panel-header">
-        <div>
-          <div className="panel-kicker">GEOSPATIAL MONITORING</div>
-          <h2>India station network</h2>
-          <p>Explore station-level model scores</p>
+        <div className="map-title-row">
+          <span className="glass-indicator-icon">
+            <TbRadar size={18} color="#38bdf8" />
+          </span>
+          <div>
+            <h2>Station Network</h2>
+            <span className="panel-subtitle">Geospatial risk distribution</span>
+          </div>
         </div>
-        <span className="live-badge">
-          <i /> {stations.length} mapped
-        </span>
+        <div className="glass-badge">
+          <span className="badge-dot-green" />
+          <span>{stations.length} Mapped</span>
+        </div>
       </div>
+
       <StationFilters
         className="map-filters"
         query={query}
         riskFilter={riskFilter}
         onQueryChange={onQueryChange}
         onRiskFilterChange={onRiskFilterChange}
-        searchPlaceholder="Search station or code…"
-        allLabel="All stations"
+        searchPlaceholder="Filter by station name or code…"
+        allLabel="All Classifications"
       />
+
       <div className="map-frame">
         <MapContainer
           center={[22.5, 79]}
@@ -77,7 +84,7 @@ export function StationMap({
           className="india-map"
         >
           <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
           <MapFocus station={selectedStation} />
@@ -89,17 +96,17 @@ export function StationMap({
               <Circle
                 key={s.station_code}
                 center={[lat, lon]}
-                radius={selectedCode === s.station_code ? 9000 : 4500}
+                radius={selectedCode === s.station_code ? 9500 : 4800}
                 pathOptions={{
                   color:
                     selectedCode === s.station_code
                       ? "#ffffff"
                       : alert
-                        ? "#ff667e"
-                        : "#43d6ad",
-                  fillColor: alert ? "#ff667e" : "#43d6ad",
-                  fillOpacity: selectedCode === s.station_code ? 0.95 : 0.7,
-                  weight: selectedCode === s.station_code ? 2 : 1,
+                        ? "#ef4444"
+                        : "#10b981",
+                  fillColor: alert ? "#ef4444" : "#10b981",
+                  fillOpacity: selectedCode === s.station_code ? 0.95 : 0.75,
+                  weight: selectedCode === s.station_code ? 2.5 : 1,
                 }}
                 eventHandlers={{
                   click: () => onSelect(s.station_code),
@@ -108,32 +115,36 @@ export function StationMap({
                 <MapTooltip direction="top">
                   <div className="map-tooltip">
                     <strong>{s.station_name}</strong>
-                    <br />
-                    {s.station_code}
-                    <br />
-                    Score: {pct(s.probability)}
+                    <span className="map-tooltip-code">{s.station_code}</span>
+                    <div className="map-tooltip-score">
+                      <span>Exceedance Risk:</span>
+                      <strong>{pct(s.probability)}</strong>
+                    </div>
                   </div>
                 </MapTooltip>
               </Circle>
             );
           })}
         </MapContainer>
+
         <div className="map-legend">
           <span>
-            <i className="legend-dot danger" /> Above threshold
+            <i className="legend-dot danger" /> Alert Exceedance
           </span>
           <span>
-            <i className="legend-dot safe" /> Below threshold
+            <i className="legend-dot safe" /> Normal Margin
           </span>
         </div>
       </div>
+
       <div className="panel-footer">
-        <span>Source: processed station dataset</span>
+        <span className="footer-meta">India Hydrological Telemetry</span>
         <button
           className="text-button"
           onClick={() => onNavigate("stations")}
         >
-          Explore stations <ArrowUpRight size={14} />
+          <span>Station Explorer</span>
+          <HiArrowUpRight size={14} color="#38bdf8" />
         </button>
       </div>
     </div>
