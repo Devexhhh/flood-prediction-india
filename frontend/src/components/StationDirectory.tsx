@@ -1,4 +1,4 @@
-import { ArrowUpRight, Download } from "lucide-react";
+import { TbDatabaseExport, HiArrowUpRight } from "./icons";
 import { formatDate, pct } from "../lib/format";
 import { isAlert } from "../lib/threshold";
 import type { RiskFilter, Station } from "../types";
@@ -29,32 +29,34 @@ export function StationDirectory({
     <section className="panel full-panel">
       <div className="panel-header">
         <div>
-          <div className="panel-kicker">STATION DIRECTORY</div>
-          <h2>Monitored station predictions</h2>
-          <p>Latest usable feature row per station</p>
+          <h2>Station Directory</h2>
+          <span className="panel-subtitle">Monitored hydrometric telemetry</span>
         </div>
-        <button className="secondary-button" onClick={onDownload}>
-          <Download size={15} /> Export CSV
+        <button className="glass-action-btn" onClick={onDownload}>
+          <TbDatabaseExport size={16} color="#34d399" />
+          <span>Export CSV</span>
         </button>
       </div>
+
       <StationFilters
         className="table-tools"
         query={query}
         riskFilter={riskFilter}
         onQueryChange={onQueryChange}
         onRiskFilterChange={onRiskFilterChange}
-        searchPlaceholder="Search by station name or code"
-        allLabel="All classifications"
+        searchPlaceholder="Search by station name or code…"
+        allLabel="All Classifications"
       />
+
       <div className="table-wrap">
         <table>
           <thead>
             <tr>
               <th>Station</th>
-              <th>Station code</th>
-              <th>Latest data</th>
-              <th>Model score</th>
-              <th>Classification</th>
+              <th>Code</th>
+              <th>Observation Date</th>
+              <th>Risk Score</th>
+              <th>Status</th>
               <th></th>
             </tr>
           </thead>
@@ -62,52 +64,61 @@ export function StationDirectory({
             {stations.slice(0, 300).map((s) => {
               const alert = isAlert(s.probability, threshold);
               return (
-              <tr
-                key={s.station_code}
-                onClick={() => onSelect(s.station_code)}
-                className={selectedCode === s.station_code ? "row-selected" : ""}
-              >
-                <td>
-                  <strong>{s.station_name || s.station_code}</strong>
-                </td>
-                <td className="code-cell">{s.station_code}</td>
-                <td>{formatDate(s.date)}</td>
-                <td>
-                  <strong>{pct(s.probability)}</strong>
-                  <div className="table-track">
-                    <i style={{ width: `${s.probability * 100}%` }} />
-                  </div>
-                </td>
-                <td>
-                  <span
-                    className={`status-chip ${alert ? "danger-chip" : "safe-chip"}`}
-                  >
-                    {alert ? "Above threshold" : "Below threshold"}
-                  </span>
-                </td>
-                <td>
-                  <button
-                    className="icon-button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onSelect(s.station_code);
-                    }}
-                  >
-                    <ArrowUpRight size={16} />
-                  </button>
-                </td>
-              </tr>
+                <tr
+                  key={s.station_code}
+                  onClick={() => onSelect(s.station_code)}
+                  className={selectedCode === s.station_code ? "row-selected" : ""}
+                >
+                  <td>
+                    <strong>{s.station_name || s.station_code}</strong>
+                  </td>
+                  <td className="code-cell">{s.station_code}</td>
+                  <td className="date-cell">{formatDate(s.date)}</td>
+                  <td>
+                    <div className="score-cell">
+                      <strong>{pct(s.probability)}</strong>
+                      <div className="table-track">
+                        <i
+                          style={{
+                            width: `${s.probability * 100}%`,
+                            background: alert ? "#ef4444" : "#10b981",
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <span
+                      className={`status-chip ${alert ? "danger-chip" : "safe-chip"}`}
+                    >
+                      <span className={`status-dot ${alert ? "dot-danger" : "dot-safe"}`} />
+                      {alert ? "Exceedance Alert" : "Normal Margin"}
+                    </span>
+                  </td>
+                  <td>
+                    <button
+                      className="glass-icon-btn small"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onSelect(s.station_code);
+                      }}
+                      aria-label="Inspect Station"
+                    >
+                      <HiArrowUpRight size={14} color="#38bdf8" />
+                    </button>
+                  </td>
+                </tr>
               );
             })}
           </tbody>
         </table>
       </div>
+
       <div className="panel-footer">
-        <span>
-          Showing {Math.min(stations.length, 300)} of {stations.length} filtered
-          stations
+        <span className="footer-meta">
+          Showing {Math.min(stations.length, 300)} of {stations.length} stations
         </span>
-        <span>Click a row to select it</span>
+        <span className="footer-submeta">Hydrometric Telemetry</span>
       </div>
     </section>
   );
