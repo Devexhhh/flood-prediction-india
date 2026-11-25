@@ -1,0 +1,202 @@
+{
+  "dataset_start": "1964-06-19T00:00:00",
+  "dataset_end": "2026-09-10T00:00:00",
+  "models": [
+    "Random Forest",
+    "XGBoost",
+    "Logistic Regression"
+  ],
+  "thresholds": {
+    "Random Forest": 0.904376,
+    "XGBoost": 0.955972,
+    "Logistic Regression": 0.739413
+  },
+  "metrics": [
+    {
+      "Model": "Logistic Regression",
+      "Threshold": 0.739413,
+      "ROC_AUC": 0.9903367669295652,
+      "PR_AUC": 0.7513862305013862,
+      "Precision": 0.5329238680188545,
+      "Recall": 0.8719326945548025,
+      "F1": 0.6615248226950354,
+      "True_Negatives": 366773,
+      "False_Positives": 3270,
+      "False_Negatives": 548,
+      "True_Positives": 3731,
+      "Predicted_Alerts": 7001,
+      "feature_importance": [
+        {
+          "feature": "danger_level",
+          "importance": 34.230940792542
+        },
+        {
+          "feature": "warning_level",
+          "importance": 33.2470295333096
+        },
+        {
+          "feature": "water_level_lag_2",
+          "importance": 20.090694549139076
+        },
+        {
+          "feature": "water_level",
+          "importance": 15.651459367261703
+        },
+        {
+          "feature": "water_level_lag_1",
+          "importance": 15.638749288336227
+        },
+        {
+          "feature": "water_level_lag_3",
+          "importance": 15.63601044963378
+        },
+        {
+          "feature": "level_warning_ratio",
+          "importance": 10.745711886492535
+        },
+        {
+          "feature": "level_danger_ratio",
+          "importance": 1.2791334897243747
+        },
+        {
+          "feature": "level_change_1d",
+          "importance": 0.4286095723474125
+        },
+        {
+          "feature": "level_change_3d",
+          "importance": 0.4169006596903509
+        }
+      ],
+      "confusion_matrix": {
+        "tn": 366773,
+        "fp": 3270,
+        "fn": 548,
+        "tp": 3731
+      }
+    },
+    {
+      "Model": "Random Forest",
+      "Threshold": 0.904376,
+      "ROC_AUC": 0.9962442039723868,
+      "PR_AUC": 0.932416094020336,
+      "Precision": 0.9035687167805618,
+      "Recall": 0.8343070810937134,
+      "F1": 0.8675577156743621,
+      "True_Negatives": 369662,
+      "False_Positives": 381,
+      "False_Negatives": 709,
+      "True_Positives": 3570,
+      "Predicted_Alerts": 3951,
+      "feature_importance": [
+        {
+          "feature": "level_warning_ratio",
+          "importance": 0.41686435784236214
+        },
+        {
+          "feature": "level_danger_ratio",
+          "importance": 0.3827206261047646
+        },
+        {
+          "feature": "rain_7d",
+          "importance": 0.03672081100473357
+        },
+        {
+          "feature": "rise_danger_ratio_3d",
+          "importance": 0.03282904488065857
+        },
+        {
+          "feature": "lon",
+          "importance": 0.021480274639434173
+        },
+        {
+          "feature": "rise_danger_ratio_1d",
+          "importance": 0.019647610183248457
+        },
+        {
+          "feature": "level_change_1d",
+          "importance": 0.01164241428510921
+        },
+        {
+          "feature": "level_change_3d",
+          "importance": 0.01065573709412186
+        },
+        {
+          "feature": "warning_level",
+          "importance": 0.008971838056827119
+        },
+        {
+          "feature": "water_level",
+          "importance": 0.008565063551611646
+        }
+      ],
+      "confusion_matrix": {
+        "tn": 369662,
+        "fp": 381,
+        "fn": 709,
+        "tp": 3570
+      }
+    },
+    {
+      "Model": "XGBoost",
+      "Threshold": 0.955972,
+      "ROC_AUC": 0.9964581082328277,
+      "PR_AUC": 0.932760666519828,
+      "Precision": 0.8752394636015326,
+      "Recall": 0.8541715354054685,
+      "F1": 0.8645771732702543,
+      "True_Negatives": 369522,
+      "False_Positives": 521,
+      "False_Negatives": 624,
+      "True_Positives": 3655,
+      "Predicted_Alerts": 4176,
+      "feature_importance": [
+        {
+          "feature": "level_warning_ratio",
+          "importance": 0.5838058590888977
+        },
+        {
+          "feature": "level_danger_ratio",
+          "importance": 0.18980607390403748
+        },
+        {
+          "feature": "danger_level",
+          "importance": 0.03158554062247276
+        },
+        {
+          "feature": "warning_level",
+          "importance": 0.02554447390139103
+        },
+        {
+          "feature": "rise_danger_ratio_1d",
+          "importance": 0.023609774187207222
+        },
+        {
+          "feature": "level_change_1d",
+          "importance": 0.022549832239747047
+        },
+        {
+          "feature": "water_level",
+          "importance": 0.013626591302454472
+        },
+        {
+          "feature": "rain_1d",
+          "importance": 0.013593846000730991
+        },
+        {
+          "feature": "water_level_lag_1",
+          "importance": 0.013353788293898106
+        },
+        {
+          "feature": "lat",
+          "importance": 0.012962513603270054
+        }
+      ],
+      "confusion_matrix": {
+        "tn": 369522,
+        "fp": 521,
+        "fn": 624,
+        "tp": 3655
+      }
+    }
+  ]
+}

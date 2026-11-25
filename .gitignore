@@ -35,3 +35,6 @@ Thumbs.db
 .idea/  
 
 *node_modules/
+# Frontend build output (Vercel builds it)
+frontend/dist/
+frontend/tsconfig.tsbuildinfo

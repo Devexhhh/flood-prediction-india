@@ -10,11 +10,15 @@ export function useDashboardData(model: ModelName) {
   const [busy, setBusy] = useState(true);
   const [error, setError] = useState("");
   const [reloadKey, setReloadKey] = useState(0);
+  const [slow, setSlow] = useState(false);
 
   useEffect(() => {
     let alive = true;
     setBusy(true);
     setError("");
+    setSlow(false);
+    // A free-tier backend can take up to a minute to wake from sleep.
+    const slowTimer = window.setTimeout(() => alive && setSlow(true), 4000);
     const m = encodeURIComponent(model);
     Promise.all([
       api<Overview>(`/api/overview?model=${m}`),
@@ -28,15 +32,19 @@ export function useDashboardData(model: ModelName) {
         setMetrics(mt.models ?? []);
       })
       .catch((e: Error) => alive && setError(e.message))
-      .finally(() => alive && setBusy(false));
+      .finally(() => {
+        window.clearTimeout(slowTimer);
+        if (alive) setBusy(false);
+      });
     return () => {
       alive = false;
+      window.clearTimeout(slowTimer);
     };
   }, [model, reloadKey]);
 
   const retry = useCallback(() => setReloadKey((k) => k + 1), []);
 
-  return { overview, stations, metrics, busy, error, setError, retry };
+  return { overview, stations, metrics, busy, slow, error, setError, retry };
 }
 
 /** Loads one station's detail and history. */
