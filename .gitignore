@@ -17,10 +17,10 @@ data/interim/
 data/processed/
 
 # Models
-models/
+/models/
 
 # Generated outputs
-outputs/
+/outputs/
 
 # Reports
 reports/figures/
