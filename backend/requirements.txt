@@ -1,8 +1,6 @@
-fastapi
-uvicorn[standard]
-pandas
-numpy
-pyarrow
-joblib
-scikit-learn
-xgboost
+# Runtime dependencies for serving the API from backend/bundle/.
+fastapi==0.162.0
+uvicorn[standard]==0.54.0
+pandas==3.0.6
+numpy==2.5.3
+pyarrow==25.0.1

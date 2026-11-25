@@ -1,4 +1,6 @@
 import { motion } from "motion/react";
+import { useEffect } from "react";
+import { warmUpApi } from "../../lib/api";
 import { Activity, ArrowRight, Cpu, MapPin, SlidersHorizontal } from "lucide-react";
 import {
   AnimatedGridPattern,
@@ -42,6 +44,8 @@ function SectionLabel({ children }: { children: string }) {
 }
 
 export function LandingPage() {
+  // Wake the free-tier API while the visitor reads the landing page.
+  useEffect(() => warmUpApi(), []);
   const dashboard = pageHref("overview");
   const best = Math.max(...MODEL_RESULTS.map((m) => m.f1));
 

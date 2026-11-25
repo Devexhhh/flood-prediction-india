@@ -1,53 +1,51 @@
 from __future__ import annotations
 
+import os
+from contextlib import asynccontextmanager
 from functools import lru_cache
-from pathlib import Path
 from typing import Any
 
-import joblib
 import numpy as np
 import pandas as pd
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 
-# backend/app/main.py -> project root is two parents above this file.
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
-DATASET_PATH = PROJECT_ROOT / "data" / "processed" / "ml_dataset.parquet"
-STATIONS_PATH = PROJECT_ROOT / "data" / "raw" / "stations.parquet"
-MODELS_DIR = PROJECT_ROOT / "models"
-METRICS_PATH = PROJECT_ROOT / "reports" / "tables" / "final_test_evaluation.csv"
+from .bundle import bundle_exists, build_bundle, load_bundle, probability_column
 
-FEATURES = [
-    "water_level", "water_level_lag_1", "water_level_lag_2",
-    "water_level_lag_3", "level_change_1d", "level_change_3d",
-    "rain_1d", "rain_3d", "rain_7d", "level_danger_ratio",
-    "level_warning_ratio", "rise_danger_ratio_1d",
-    "rise_danger_ratio_3d", "danger_level", "warning_level", "lat", "lon",
-]
 
-MODEL_FILES = {
-    "Random Forest": "random_forest.joblib",
-    "XGBoost": "xgboost.joblib",
-    "Logistic Regression": "logistic_regression.joblib",
-}
-THRESHOLDS = {
-    "Random Forest": 0.904376,
-    "XGBoost": 0.955972,
-    "Logistic Regression": 0.739413,
-}
+@lru_cache(maxsize=1)
+def load_assets() -> dict[str, Any]:
+    """Serve from the committed bundle; fall back to the full local data."""
+    return load_bundle() if bundle_exists() else build_bundle()
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    try:
+        load_assets()
+    except Exception as exc:  # keep serving /api/health so the error is visible
+        print(f"Asset load failed at startup: {exc}")
+    yield
+
 
 app = FastAPI(
     title="Flood Prediction India API",
-    version="0.1.0",
+    version="0.2.0",
     description="Station-level next-day danger-threshold exceedance research API.",
+    lifespan=lifespan,
 )
+
+# Public, read-only API: allow any origin unless CORS_ORIGINS narrows it.
+_origins = [o.strip() for o in os.getenv("CORS_ORIGINS", "*").split(",") if o.strip()]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
-    allow_credentials=True,
-    allow_methods=["*"],
+    allow_origins=_origins,
+    allow_credentials=False,
+    allow_methods=["GET"],
     allow_headers=["*"],
 )
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 
 
 def json_safe(value: Any) -> Any:
@@ -55,81 +53,17 @@ def json_safe(value: Any) -> Any:
         return {str(k): json_safe(v) for k, v in value.items()}
     if isinstance(value, list):
         return [json_safe(v) for v in value]
+    if isinstance(value, (np.bool_,)):
+        return bool(value)
     if isinstance(value, (np.integer,)):
         return int(value)
-    if isinstance(value, (np.floating,)):
+    if isinstance(value, (np.floating, float)):
         return None if not np.isfinite(value) else float(value)
-    if isinstance(value, (pd.Timestamp,)):
+    if isinstance(value, pd.Timestamp):
         return value.isoformat()
-    if pd.isna(value):
+    if value is None or (not isinstance(value, (str, bytes)) and pd.isna(value)):
         return None
     return value
-
-
-@lru_cache(maxsize=1)
-def load_assets() -> dict[str, Any]:
-    missing = [str(p) for p in [DATASET_PATH] if not p.is_file()]
-    if not MODELS_DIR.is_dir():
-        missing.append(str(MODELS_DIR))
-    if missing:
-        raise RuntimeError(
-            "Required project assets missing: " + ", ".join(missing)
-        )
-
-    df = pd.read_parquet(DATASET_PATH)
-    required = {"station_code", "date", "flood_next_day", *FEATURES}
-    missing_columns = required - set(df.columns)
-    if missing_columns:
-        raise RuntimeError(
-            "Processed dataset is missing columns: "
-            + ", ".join(sorted(missing_columns))
-        )
-
-    df["date"] = pd.to_datetime(df["date"], errors="coerce")
-    df = df.dropna(subset=["station_code", "date"])
-    df = df.sort_values(["station_code", "date"])
-
-    station_meta = pd.DataFrame()
-    if STATIONS_PATH.is_file():
-        station_meta = pd.read_parquet(STATIONS_PATH)
-        if "station_code" in station_meta:
-            station_meta = station_meta.drop_duplicates("station_code")
-            # Keep metadata fields separate from model features.
-            rename = {
-                c: f"{c}_meta"
-                for c in ["lat", "lon", "danger_level", "warning_level"]
-                if c in station_meta.columns
-            }
-            station_meta = station_meta.rename(columns=rename)
-
-    models = {}
-    for name, filename in MODEL_FILES.items():
-        path = MODELS_DIR / filename
-        if path.is_file():
-            models[name] = joblib.load(path)
-
-    if not models:
-        raise RuntimeError(f"No model files found in {MODELS_DIR}")
-
-    latest = df.groupby("station_code", sort=False, as_index=False).tail(1).copy()
-    latest = latest.dropna(subset=FEATURES)
-    for name, model in models.items():
-        latest[f"probability_{name}"] = model.predict_proba(latest[FEATURES])[:, 1]
-
-    if not station_meta.empty:
-        latest = latest.merge(station_meta, on="station_code", how="left")
-
-    if "name" in latest.columns:
-        latest["station_name"] = latest["name"].fillna(latest["station_code"].astype(str))
-    else:
-        latest["station_name"] = latest["station_code"].astype(str)
-
-    return {
-        "data": df,
-        "latest": latest,
-        "stations": station_meta,
-        "models": models,
-    }
 
 
 def get_assets() -> dict[str, Any]:
@@ -139,11 +73,15 @@ def get_assets() -> dict[str, Any]:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
 
-def model_probability(row: pd.Series, model_name: str, assets: dict[str, Any]) -> float:
-    if model_name not in assets["models"]:
-        raise HTTPException(status_code=404, detail=f"Model unavailable: {model_name}")
-    X = pd.DataFrame([{feature: row[feature] for feature in FEATURES}], columns=FEATURES)
-    return float(assets["models"][model_name].predict_proba(X)[0, 1])
+def require_model(model: str, frame: pd.DataFrame) -> str:
+    col = probability_column(model)
+    if col not in frame.columns:
+        raise HTTPException(status_code=404, detail=f"Model unavailable: {model}")
+    return col
+
+
+def threshold_for(model: str, assets: dict[str, Any]) -> float:
+    return float(assets["meta"]["thresholds"].get(model, 0.5))
 
 
 @app.get("/api/health")
@@ -158,26 +96,24 @@ def health():
 @app.get("/api/overview")
 def overview(model: str = Query(default="Random Forest")):
     assets = get_assets()
-    latest = assets["latest"].copy()
-    probability_col = f"probability_{model}"
-    if probability_col not in latest.columns:
-        raise HTTPException(status_code=404, detail=f"Model unavailable: {model}")
-    threshold = THRESHOLDS.get(model, 0.5)
-    highest = latest.loc[latest[probability_col].idxmax()]
+    latest = assets["latest"]
+    col = require_model(model, latest)
+    threshold = threshold_for(model, assets)
+    highest = latest.loc[latest[col].idxmax()]
     return json_safe({
         "model": model,
         "threshold": threshold,
         "station_count": len(latest),
-        "alert_count": int((latest[probability_col] >= threshold).sum()),
-        "below_threshold_count": int((latest[probability_col] < threshold).sum()),
-        "mean_score": float(latest[probability_col].mean()),
-        "highest_probability": float(highest[probability_col]),
+        "alert_count": int((latest[col] >= threshold).sum()),
+        "below_threshold_count": int((latest[col] < threshold).sum()),
+        "mean_score": float(latest[col].mean()),
+        "highest_probability": float(highest[col]),
         "highest_station_code": highest["station_code"],
         "highest_station_name": highest["station_name"],
         "latest_data_date": latest["date"].max(),
-        "dataset_start": assets["data"]["date"].min(),
-        "dataset_end": assets["data"]["date"].max(),
-        "note": "Latest date in local dataset; not necessarily today's observations.",
+        "dataset_start": assets["meta"]["dataset_start"],
+        "dataset_end": assets["meta"]["dataset_end"],
+        "note": "Latest date in the dataset; not necessarily today's observations.",
     })
 
 
@@ -188,55 +124,50 @@ def stations(
     limit: int = Query(default=1000, ge=1, le=5000),
 ):
     assets = get_assets()
-    latest = assets["latest"].copy()
-    probability_col = f"probability_{model}"
-    if probability_col not in latest.columns:
-        raise HTTPException(status_code=404, detail=f"Model unavailable: {model}")
+    latest = assets["latest"]
+    col = require_model(model, latest)
 
     if search.strip():
         q = search.strip().lower()
         mask = (
-            latest["station_code"].astype(str).str.lower().str.contains(q, na=False)
-            | latest["station_name"].astype(str).str.lower().str.contains(q, na=False)
+            latest["station_code"].astype(str).str.lower().str.contains(q, na=False, regex=False)
+            | latest["station_name"].astype(str).str.lower().str.contains(q, na=False, regex=False)
         )
         latest = latest.loc[mask]
 
     fields = [
         "station_code", "station_name", "date", "lat", "lon",
         "lat_meta", "lon_meta", "danger_level", "warning_level",
-        "danger_level_meta", "warning_level_meta", probability_col,
+        "danger_level_meta", "warning_level_meta", col,
     ]
-    fields = [c for c in fields if c in latest.columns]
-    latest = latest.sort_values(probability_col, ascending=False).head(limit)
-    result = latest[fields].rename(columns={probability_col: "probability"})
-    result["threshold"] = THRESHOLDS.get(model, 0.5)
-    result["predicted_exceedance"] = result["probability"] >= result["threshold"]
+    result = (
+        latest.sort_values(col, ascending=False)
+        .head(limit)[[c for c in fields if c in latest.columns]]
+        .rename(columns={col: "probability"})
+    )
+    threshold = threshold_for(model, assets)
+    result["threshold"] = threshold
+    result["predicted_exceedance"] = result["probability"] >= threshold
     return json_safe(result.to_dict(orient="records"))
 
 
 @app.get("/api/stations/{station_code}")
 def station_detail(station_code: str, model: str = Query(default="Random Forest")):
     assets = get_assets()
-    df = assets["data"]
-    station = df[df["station_code"].astype(str) == station_code].sort_values("date")
-    if station.empty:
-        raise HTTPException(status_code=404, detail="Station not found in processed dataset.")
+    details = assets["details"]
+    col = require_model(model, details)
 
-    latest_row = station.dropna(subset=FEATURES).tail(1)
-    if latest_row.empty:
-        raise HTTPException(status_code=404, detail="Station has no latest row with all required features.")
+    match = details[details["station_code"] == station_code]
+    if match.empty:
+        raise HTTPException(status_code=404, detail="Station not found or has no complete feature row.")
+    row = match.iloc[0]
+    probability = float(row[col])
+    threshold = threshold_for(model, assets)
 
-    row = latest_row.iloc[0]
-    probability = model_probability(row, model, assets)
-    threshold = THRESHOLDS.get(model, 0.5)
+    history = assets["history"]
+    history = history[history["station_code"] == station_code].drop(columns="station_code")
+    history = history.astype(object).where(history.notna(), None)
 
-    history_cols = [
-        c for c in [
-            "date", "water_level", "rain_1d", "rain_3d", "rain_7d",
-            "level_danger_ratio", "level_warning_ratio", "flood_next_day",
-        ] if c in station.columns
-    ]
-    history = station.tail(365)[history_cols].replace({np.nan: None})
     return json_safe({
         "station_code": station_code,
         "model": model,
@@ -258,30 +189,11 @@ def station_detail(station_code: str, model: str = Query(default="Random Forest"
 
 @app.get("/api/model-metrics")
 def model_metrics():
-    if not METRICS_PATH.is_file():
+    metrics = get_assets()["meta"].get("metrics") or []
+    if not metrics:
         return {
             "available": False,
-            "message": "Evaluation CSV not found. Expected reports/tables/final_test_evaluation.csv.",
+            "message": "Evaluation metrics not found. Expected reports/tables/final_test_evaluation.csv when building the bundle.",
             "models": [],
         }
-    metrics = pd.read_csv(METRICS_PATH)
-    assets = get_assets()
-    models = []
-    for metric in metrics.to_dict(orient="records"):
-        model = assets["models"].get(metric["Model"])
-        if model is not None:
-            estimator = getattr(model, "named_steps", {}).get("model", model)
-            importance = getattr(estimator, "feature_importances_", None)
-            if importance is None and hasattr(estimator, "coef_"):
-                importance = np.abs(np.asarray(estimator.coef_)).ravel()
-            if importance is not None:
-                metric["feature_importance"] = [
-                    {"feature": feature, "importance": float(score)}
-                    for feature, score in sorted(zip(FEATURES, importance), key=lambda item: item[1], reverse=True)
-                ][:10]
-        tn, fp = metric.get("True_Negatives"), metric.get("False_Positives")
-        fn, tp = metric.get("False_Negatives"), metric.get("True_Positives")
-        if all(pd.notna(value) for value in [tn, fp, fn, tp]):
-            metric["confusion_matrix"] = {"tn": tn, "fp": fp, "fn": fn, "tp": tp}
-        models.append(metric)
-    return json_safe({"available": True, "models": models})
+    return json_safe({"available": True, "models": metrics})

@@ -1,11 +1,19 @@
 import { AlertTriangle, RotateCw, X } from "lucide-react";
+import { PulseDot } from "../../components/magicui";
 import { Button } from "../../components/ui/button";
 import { Card } from "../../components/ui/card";
 
-export function LoadingState() {
+export function LoadingState({ slow = false }: { slow?: boolean }) {
   return (
     <div aria-busy="true" aria-live="polite" className="flex flex-col gap-4">
-      <span className="sr-only">Loading station data…</span>
+      {slow ? (
+        <Card className="flex items-center gap-3 rounded-[14px] px-4 py-3 text-[13px] text-muted-foreground">
+          <PulseDot className="text-accent" />
+          Waking up the prediction API. The free server sleeps when idle and can take up to a minute to start.
+        </Card>
+      ) : (
+        <span className="sr-only">Loading station data…</span>
+      )}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {Array.from({ length: 4 }, (_, i) => (
           <div key={i} className="h-[118px] animate-pulse rounded-[14px] border border-border bg-card" />
@@ -36,7 +44,7 @@ export function ErrorState({
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <strong className="text-sm font-medium">Couldn’t reach the prediction API</strong>
         <p className="m-0 text-[13px] text-muted-foreground">
-          {message}. Make sure the backend is running on port 8000.
+          {message}. If the server was asleep, retrying in a moment usually works.
         </p>
       </div>
       <Button variant="outline" size="sm" onClick={onRetry}>

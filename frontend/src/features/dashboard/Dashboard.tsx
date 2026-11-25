@@ -29,7 +29,7 @@ export function Dashboard({
   const [riskFilter, setRiskFilter] = useState<RiskFilter>("all");
   const [commandOpen, setCommandOpen] = useState(false);
 
-  const { overview, stations, metrics, busy, error, setError, retry } = useDashboardData(model);
+  const { overview, stations, metrics, busy, slow, error, setError, retry } = useDashboardData(model);
   const { detail, loading: detailLoading } = useStationDetail(selectedCode, model);
 
   function changeModel(next: ModelName) {
@@ -120,7 +120,7 @@ export function Dashboard({
 
           {error && <ErrorState message={error} onRetry={retry} onDismiss={() => setError("")} />}
 
-          {busy && !error && <LoadingState />}
+          {busy && !error && <LoadingState slow={slow} />}
 
           {!busy && !error && overview && (
             <>

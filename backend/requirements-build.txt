@@ -1,0 +1,7 @@
+# Extra dependencies for rebuilding backend/bundle/ from the full data and models:
+#   pip install -r backend/requirements-build.txt
+#   python -m backend.build_bundle
+-r requirements.txt
+joblib==1.6.0
+scikit-learn==1.9.1
+xgboost==3.4.1
